@@ -1,6 +1,10 @@
-table.dbgrid-table{
+table.dbgrid-table {
     border-collapse: collapse;
     border-spacing: 0;
     width: 100%;
     border: 1px solid #ddd;
+}
+
+table.dbgrid-table td {
+    border: 1px #ccc solid;
 }
