@@ -19,7 +19,7 @@ This is the working inventory for building a web grid similar to Delphi DevExpre
 | Root control | `DBGrid` class mounted on a DOM selector |
 | Table view | `DBGridOptions` with `columns` and `data` |
 | Data controller | `keyField`, `data`, `sorting`, `filters`, and `paging` |
-| Columns | `DBGridColumn` with field, caption, visibility, width, alignment, type, escaped renderer output, sortable, and filterable flags |
+| Columns | `DBGridColumn` with field, caption, visibility, width, alignment, type, configurable boolean labels, escaped renderer output, sortable, and filterable flags |
 | Appearance options | `appearance.showColumnHeaders`, `showFilterRow`, `showGridLines`, `stripedRows`, `rowHeight`, `emptyText` |
 | Behavior options | `behavior.allowSorting`, `allowFiltering`, `allowColumnResize`, `focusedRowEnabled`, `multiSelect` |
 | Editing options | `editing.allowInsert`, `allowUpdate`, `allowDelete`, and `mode` placeholders |

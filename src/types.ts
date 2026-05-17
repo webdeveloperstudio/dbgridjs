@@ -12,6 +12,8 @@ export interface DBGridColumn {
     minWidth?: number | string;
     alignment?: DBGridAlignment;
     dataType?: 'string' | 'number' | 'date' | 'boolean' | 'custom';
+    trueText?: string;
+    falseText?: string;
     readOnly?: boolean;
     sortable?: boolean;
     filterable?: boolean;
@@ -96,7 +98,7 @@ export interface DBGridFilterEvent extends DBGridEventContext {
 export interface DBGridEvents {
     onInit?: (event: DBGridEventContext) => void;
     onBeforeRender?: (event: DBGridEventContext) => void;
-    onAfterRender?: (event: DBGridEventContext & { element: JQuery<HTMLElement> }) => void;
+    onAfterRender?: (event: DBGridEventContext & { element: HTMLElement }) => void;
     onRowClick?: (event: DBGridRowEvent) => void;
     onCellClick?: (event: DBGridCellEvent) => void;
     onFocusedRowChanged?: (event: DBGridRowEvent) => void;

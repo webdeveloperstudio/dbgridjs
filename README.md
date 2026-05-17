@@ -5,7 +5,7 @@ Data grid inspired by Delphi DBGrid/DevExpress TcxGrid for browser applications 
 ## Current capabilities
 
 - Data-driven columns and rows
-- Column captions, widths, alignment, visibility, data types, and custom cell renderers
+- Column captions, widths, alignment, visibility, data types, configurable boolean labels, and custom cell renderers
 - Cell values and renderer output are escaped by default; opt in with `allowHtml` only for trusted HTML
 - Client-side sorting, filter row, focused row, single or multi selection, and paging navigator
 - TcxGrid-style option groups for appearance, behavior, editing, paging, sorting, filtering, and events

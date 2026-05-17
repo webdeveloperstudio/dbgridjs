@@ -66,7 +66,7 @@ export class DBGrid extends Table {
             const rows = this.getPagedRows(this.getSortedRows(this.getFilteredRows(options.data, options.filters), options.sorting));
             this.baseElement.html(this.getGridTemplate(options, rows));
             this.bindGridEvents();
-            options.events?.onAfterRender?.({ ...this.createContext(options), element: this.baseElement });
+            options.events?.onAfterRender?.({ ...this.createContext(options), element: this.baseElement[0] });
         } catch (error) {
             this.options.events?.onDataError?.(error);
             throw error;
@@ -114,19 +114,7 @@ export class DBGrid extends Table {
                 return;
             }
 
-            if (options.behavior?.multiSelect) {
-                const isToggleClick = event.ctrlKey || event.metaKey;
-                if (isToggleClick && this.selectedKeys.has(key)) {
-                    this.selectedKeys.delete(key);
-                } else {
-                    if (!isToggleClick) {
-                        this.selectedKeys.clear();
-                    }
-                    this.selectedKeys.add(key);
-                }
-            } else {
-                this.selectedKeys = new Set<string>([key]);
-            }
+            this.applySelection(key, options.behavior?.multiSelect === true, event.ctrlKey === true || event.metaKey === true);
 
             if (options.behavior?.focusedRowEnabled !== false) {
                 this.focusedRowKey = key;
@@ -370,9 +358,26 @@ export class DBGrid extends Table {
             return value.toLocaleDateString();
         }
         if (column.dataType === 'boolean' && typeof value === 'boolean') {
-            return value ? 'Yes' : 'No';
+            return value ? (column.trueText ?? 'Yes') : (column.falseText ?? 'No');
         }
         return String(value ?? '');
+    }
+
+    private applySelection(key: string, isMultiSelect: boolean, isToggleClick: boolean): void {
+        if (!isMultiSelect) {
+            this.selectedKeys = new Set<string>([key]);
+            return;
+        }
+
+        if (isToggleClick && this.selectedKeys.has(key)) {
+            this.selectedKeys.delete(key);
+            return;
+        }
+
+        if (!isToggleClick) {
+            this.selectedKeys.clear();
+        }
+        this.selectedKeys.add(key);
     }
 
     private formatSize(value: number | string): string {
