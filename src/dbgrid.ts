@@ -16,6 +16,13 @@ export class DBGrid extends Table {
     private options?: DBGridOptions;
     private selectedKeys: Set<string> = new Set<string>();
     private focusedRowKey?: string;
+    private readonly htmlEntities: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
 
     constructor(pEl: string, pMethods: methodsInterface[] = []) {
         super(pMethods);
@@ -116,7 +123,7 @@ export class DBGrid extends Table {
                 return;
             }
 
-            const isCtrlOrMetaPressed = event.ctrlKey === true || event.metaKey === true;
+            const isCtrlOrMetaPressed = Boolean(event.ctrlKey || event.metaKey);
             this.applySelection(key, options.behavior?.multiSelect === true, isCtrlOrMetaPressed);
 
             if (options.behavior?.focusedRowEnabled !== false) {
@@ -412,16 +419,7 @@ export class DBGrid extends Table {
     }
 
     private escape(value: string): string {
-        return value.replace(/[&<>"']/g, character => {
-            const entities: Record<string, string> = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            };
-            return entities[character];
-        });
+        return value.replace(/[&<>"']/g, character => this.htmlEntities[character] ?? character);
     }
 
     private createContext(options: DBGridOptions) {
