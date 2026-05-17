@@ -115,16 +115,22 @@ export class DBGrid extends Table {
             }
 
             if (options.behavior?.multiSelect) {
-                if (this.selectedKeys.has(key) && (event.ctrlKey || event.metaKey)) {
+                const isToggleClick = event.ctrlKey || event.metaKey;
+                if (isToggleClick && this.selectedKeys.has(key)) {
                     this.selectedKeys.delete(key);
                 } else {
+                    if (!isToggleClick) {
+                        this.selectedKeys.clear();
+                    }
                     this.selectedKeys.add(key);
                 }
             } else {
                 this.selectedKeys = new Set<string>([key]);
             }
 
-            this.focusedRowKey = key;
+            if (options.behavior?.focusedRowEnabled !== false) {
+                this.focusedRowKey = key;
+            }
             options.events?.onRowClick?.({ ...this.createContext(options), row, rowIndex, key });
             options.events?.onFocusedRowChanged?.({ ...this.createContext(options), row, rowIndex, key });
             options.events?.onSelectionChanged?.({
@@ -363,7 +369,7 @@ export class DBGrid extends Table {
         if (value instanceof Date) {
             return value.toLocaleDateString();
         }
-        if (column.dataType === 'boolean') {
+        if (column.dataType === 'boolean' && typeof value === 'boolean') {
             return value ? 'Yes' : 'No';
         }
         return String(value ?? '');
