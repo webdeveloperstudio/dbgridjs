@@ -3,6 +3,7 @@ export type DBGridRow = Record<string, DBGridCellValue>;
 export type DBGridAlignment = 'left' | 'center' | 'right';
 export type DBGridSortDirection = 'asc' | 'desc';
 export type DBGridFilterOperator = 'contains' | 'equals' | 'startsWith' | 'endsWith' | 'gt' | 'gte' | 'lt' | 'lte';
+export type DBGridSummaryType = 'count' | 'sum' | 'avg' | 'min' | 'max';
 
 export interface DBGridColumn {
     fieldName: string;
@@ -17,7 +18,9 @@ export interface DBGridColumn {
     readOnly?: boolean;
     sortable?: boolean;
     filterable?: boolean;
+    groupable?: boolean;
     fixed?: boolean;
+    summary?: DBGridSummaryType;
     allowHtml?: boolean;
     className?: string;
     headerClassName?: string;
@@ -36,6 +39,7 @@ export interface DBGridAppearanceOptions {
 export interface DBGridBehaviorOptions {
     allowSorting?: boolean;
     allowFiltering?: boolean;
+    allowGrouping?: boolean;
     allowColumnResize?: boolean;
     focusedRowEnabled?: boolean;
     multiSelect?: boolean;
@@ -46,6 +50,20 @@ export interface DBGridPagingOptions {
     pageIndex?: number;
     pageSize?: number;
     showNavigator?: boolean;
+    showRecordInfo?: boolean;
+}
+
+export interface DBGridGroupingOptions {
+    enabled?: boolean;
+    showGroupPanel?: boolean;
+    descriptors?: DBGridGroupDescriptor[];
+}
+
+export interface DBGridNavigatorOptions {
+    visible?: boolean;
+    showNavigation?: boolean;
+    showEditing?: boolean;
+    showRefresh?: boolean;
 }
 
 export interface DBGridSortDescriptor {
@@ -57,6 +75,11 @@ export interface DBGridFilterDescriptor {
     fieldName: string;
     operator?: DBGridFilterOperator;
     value: DBGridCellValue;
+}
+
+export interface DBGridGroupDescriptor {
+    fieldName: string;
+    direction?: DBGridSortDirection;
 }
 
 export interface DBGridEditingOptions {
@@ -95,6 +118,16 @@ export interface DBGridFilterEvent extends DBGridEventContext {
     filters: DBGridFilterDescriptor[];
 }
 
+export interface DBGridGroupEvent extends DBGridEventContext {
+    grouping: DBGridGroupDescriptor[];
+}
+
+export interface DBGridDataChangeEvent extends DBGridEventContext {
+    row: DBGridRow;
+    rowIndex: number;
+    key: string;
+}
+
 export interface DBGridEvents {
     onInit?: (event: DBGridEventContext) => void;
     onBeforeRender?: (event: DBGridEventContext) => void;
@@ -105,6 +138,11 @@ export interface DBGridEvents {
     onSelectionChanged?: (event: DBGridSelectionEvent) => void;
     onSortChanged?: (event: DBGridSortEvent) => void;
     onFilterChanged?: (event: DBGridFilterEvent) => void;
+    onGroupChanged?: (event: DBGridGroupEvent) => void;
+    onRowInserted?: (event: DBGridDataChangeEvent) => void;
+    onRowUpdated?: (event: DBGridDataChangeEvent) => void;
+    onRowDeleted?: (event: DBGridDataChangeEvent) => void;
+    onRefresh?: (event: DBGridEventContext) => void;
     onDataError?: (error: unknown) => void;
 }
 
@@ -118,6 +156,8 @@ export interface DBGridOptions {
     appearance?: DBGridAppearanceOptions;
     behavior?: DBGridBehaviorOptions;
     paging?: DBGridPagingOptions;
+    grouping?: DBGridGroupingOptions;
+    navigator?: DBGridNavigatorOptions;
     sorting?: DBGridSortDescriptor[];
     filters?: DBGridFilterDescriptor[];
     editing?: DBGridEditingOptions;
