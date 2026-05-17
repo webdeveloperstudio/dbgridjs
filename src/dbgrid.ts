@@ -63,8 +63,10 @@ export class DBGrid extends Table {
         try {
             const options = this.options;
             options.events?.onBeforeRender?.(this.createContext(options));
-            const rows = this.getPagedRows(this.getSortedRows(this.getFilteredRows(options.data, options.filters), options.sorting));
-            this.baseElement.html(this.getGridTemplate(options, rows));
+            const filteredRows = this.getFilteredRows(options.data, options.filters);
+            const sortedRows = this.getSortedRows(filteredRows, options.sorting);
+            const pagedRows = this.getPagedRows(sortedRows);
+            this.baseElement.html(this.getGridTemplate(options, pagedRows));
             this.bindGridEvents();
             options.events?.onAfterRender?.({ ...this.createContext(options), element: this.baseElement[0] });
         } catch (error) {
@@ -114,7 +116,8 @@ export class DBGrid extends Table {
                 return;
             }
 
-            this.applySelection(key, options.behavior?.multiSelect === true, event.ctrlKey === true || event.metaKey === true);
+            const isCtrlOrMetaPressed = event.ctrlKey === true || event.metaKey === true;
+            this.applySelection(key, options.behavior?.multiSelect === true, isCtrlOrMetaPressed);
 
             if (options.behavior?.focusedRowEnabled !== false) {
                 this.focusedRowKey = key;
@@ -124,7 +127,7 @@ export class DBGrid extends Table {
             options.events?.onSelectionChanged?.({
                 ...this.createContext(options),
                 selectedKeys: Array.from(this.selectedKeys),
-                selectedRows: Array.from(this.selectedKeys).map(item => this.getRowByKey(item)).filter((item): item is DBGridRow => Boolean(item))
+                selectedRows: this.getSelectedRows()
             });
             this.renderGrid();
         });
@@ -184,11 +187,24 @@ export class DBGrid extends Table {
             </th>`;
         }).join('');
 
-        const filters = options.appearance?.showFilterRow && options.behavior?.allowFiltering !== false
-            ? `<tr class="dbgrid-filter-row">${columns.map(column => `<th>${column.filterable === false ? '' : `<input type="search" data-dbgrid-filter="${this.escape(column.fieldName)}" value="${this.escape(String(this.getFilterValue(column.fieldName, options.filters) ?? ''))}" />`}</th>`).join('')}</tr>`
-            : '';
+        return `<thead><tr>${header}</tr>${this.getFilterRowTemplate(options, columns)}</thead>`;
+    }
 
-        return `<thead><tr>${header}</tr>${filters}</thead>`;
+    private getFilterRowTemplate(options: DBGridOptions, columns: DBGridColumn[]): string {
+        if (!options.appearance?.showFilterRow || options.behavior?.allowFiltering === false) {
+            return '';
+        }
+
+        const filters = columns.map(column => {
+            if (column.filterable === false) {
+                return '<th></th>';
+            }
+
+            const value = String(this.getFilterValue(column.fieldName, options.filters) ?? '');
+            return `<th><input type="search" data-dbgrid-filter="${this.escape(column.fieldName)}" value="${this.escape(value)}" /></th>`;
+        }).join('');
+
+        return `<tr class="dbgrid-filter-row">${filters}</tr>`;
     }
 
     private getBodyTemplate(options: DBGridOptions, columns: DBGridColumn[], rows: DBGridRow[]): string {
@@ -322,7 +338,18 @@ export class DBGrid extends Table {
     }
 
     private getRowByKey(key: string): DBGridRow | undefined {
-        return this.options?.data.find((row, index) => this.getRowKey(row, index, this.options as DBGridOptions) === key);
+        const options = this.options;
+        if (!options) {
+            return undefined;
+        }
+
+        return options.data.find((row, index) => this.getRowKey(row, index, options) === key);
+    }
+
+    private getSelectedRows(): DBGridRow[] {
+        return Array.from(this.selectedKeys)
+            .map(item => this.getRowByKey(item))
+            .filter((item): item is DBGridRow => Boolean(item));
     }
 
     private getRowKey(row: DBGridRow, index: number, options: DBGridOptions): string {
@@ -385,7 +412,16 @@ export class DBGrid extends Table {
     }
 
     private escape(value: string): string {
-        return $('<div />').text(value).html();
+        return value.replace(/[&<>"']/g, character => {
+            const entities: Record<string, string> = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            };
+            return entities[character];
+        });
     }
 
     private createContext(options: DBGridOptions) {
