@@ -28,6 +28,13 @@ module.exports = {
     output: {
         filename: 'app.js',
         clean: true,
+        publicPath: '/dist/',
         path: path.resolve(__dirname, 'dist'),
+    },
+    devServer: {
+        static: {
+            directory: __dirname,
+        },
+        open: ['/example/index.html'],
     },
 };

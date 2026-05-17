@@ -38,3 +38,11 @@ new DBGrid('#grid').render(options);
 ```
 
 See `docs/tcxgrid-research.md` for the TcxGrid feature inventory and implementation mapping.
+
+## Local Development
+
+```sh
+npm run start:local
+```
+
+The local server opens the example grid at `example/index.html` and serves the bundled output from `dist/app.js`.
