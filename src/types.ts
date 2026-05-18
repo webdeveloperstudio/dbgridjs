@@ -15,6 +15,7 @@ export interface DBGridColumn {
     dataType?: 'string' | 'number' | 'date' | 'boolean' | 'custom';
     trueText?: string;
     falseText?: string;
+    required?: boolean;
     readOnly?: boolean;
     sortable?: boolean;
     filterable?: boolean;

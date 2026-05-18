@@ -16,12 +16,20 @@ interface DBGridGroupBucket {
     rows: DBGridRow[];
 }
 
+interface DBGridEditorState {
+    mode: 'insert' | 'edit';
+    row: DBGridRow;
+    rowIndex?: number;
+    errors: Record<string, string>;
+}
+
 export class DBGrid extends Table {
 
     private baseElement: JQuery<HTMLDivElement>;
     private options?: DBGridOptions;
     private selectedKeys: Set<string> = new Set<string>();
     private focusedRowKey?: string;
+    private editorState?: DBGridEditorState;
     private readonly htmlEntities: Record<string, string> = {
         '&': '&amp;',
         '<': '&lt;',
@@ -198,6 +206,19 @@ export class DBGrid extends Table {
             const action = String($(event.currentTarget).attr('data-dbgrid-nav'));
             this.handleNavigatorAction(action);
         });
+
+        this.baseElement.on('input.dbgridjs change.dbgridjs', '[data-dbgrid-editor-field]', (event: JQuery.TriggeredEvent) => {
+            this.updateEditorValue($(event.currentTarget));
+        });
+
+        this.baseElement.on('submit.dbgridjs', '[data-dbgrid-editor-form]', (event: JQuery.SubmitEvent) => {
+            event.preventDefault();
+            this.saveEditor();
+        });
+
+        this.baseElement.on('click.dbgridjs', '[data-dbgrid-editor-cancel]', () => {
+            this.closeEditor();
+        });
     }
 
     private getGridTemplate(options: DBGridOptions, rows: DBGridRow[], allRows: DBGridRow[]): string {
@@ -217,6 +238,7 @@ export class DBGrid extends Table {
                     <tbody>${this.getBodyTemplate(options, columns, rows)}</tbody>
                 </table>
                 ${this.getNavigatorTemplate(options, allRows)}
+                ${this.getEditorTemplate(options)}
             </div>`;
     }
 
