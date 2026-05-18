@@ -43,8 +43,8 @@ const gridOptions: DBGridOptions = {
     columns: [
         { fieldName: 'id', caption: 'ID', width: 70, dataType: 'number', alignment: 'right' },
         { fieldName: 'customer', caption: 'Customer', width: 220 },
-        { fieldName: 'status', caption: 'Status', width: 140 },
-        { fieldName: 'amount', caption: 'Amount', width: 120, dataType: 'number', alignment: 'right', renderer: value => `$${Number(value ?? 0).toFixed(2)}` },
+        { fieldName: 'status', caption: 'Status', width: 140, groupable: true },
+        { fieldName: 'amount', caption: 'Amount', width: 120, dataType: 'number', alignment: 'right', summary: 'sum', renderer: value => `$${Number(value ?? 0).toFixed(2)}` },
         { fieldName: 'paid', caption: 'Paid', width: 90, dataType: 'boolean', alignment: 'center' }
     ],
     data: [
@@ -61,6 +61,7 @@ const gridOptions: DBGridOptions = {
     behavior: {
         allowSorting: true,
         allowFiltering: true,
+        allowGrouping: true,
         focusedRowEnabled: true,
         multiSelect: true
     },
@@ -69,11 +70,29 @@ const gridOptions: DBGridOptions = {
         pageSize: 3,
         showNavigator: true
     },
+    grouping: {
+        enabled: true,
+        showGroupPanel: true,
+        descriptors: [{ fieldName: 'status' }]
+    },
+    navigator: {
+        visible: true,
+        showNavigation: true,
+        showEditing: true,
+        showRefresh: true
+    },
     editing: {
         allowInsert: true,
         allowUpdate: true,
         allowDelete: true,
         mode: 'inline'
+    },
+    events: {
+        onGroupChanged: event => console.log('Grouping changed', event.grouping),
+        onRowInserted: event => console.log('Inserted', event.row),
+        onRowUpdated: event => console.log('Updated', event.row),
+        onRowDeleted: event => console.log('Deleted', event.row),
+        onRefresh: event => console.log('Refresh requested', event.options.data.length)
     }
 };
 

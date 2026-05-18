@@ -8,6 +8,8 @@ Data grid inspired by Delphi DBGrid/DevExpress TcxGrid for browser applications 
 - Column captions, widths, alignment, visibility, data types, configurable boolean labels, and custom cell renderers
 - Cell values and renderer output are escaped by default; opt in with `allowHtml` only for trusted HTML
 - Client-side sorting, filter row, focused row, single or multi selection, and paging navigator
+- TcxGrid-style group panel with column grouping and group summaries
+- Navigator panel with first/prior/next/last movement plus create, edit, delete, and refresh actions for local row data
 - TcxGrid-style option groups for appearance, behavior, editing, paging, sorting, filtering, and events
 - Backward-compatible rendering of the original table structure
 
@@ -29,6 +31,8 @@ const options: DBGridOptions = {
   ],
   appearance: { showFilterRow: true },
   behavior: { allowSorting: true, multiSelect: true },
+  grouping: { enabled: true, descriptors: [{ fieldName: 'customer' }] },
+  navigator: { visible: true, showEditing: true },
   events: {
     onRowClick: event => console.log(event.key, event.row)
   }

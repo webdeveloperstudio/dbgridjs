@@ -26,6 +26,35 @@ table.dbgrid-table th {
     user-select: none;
 }
 
+.dbgrid-header-tools {
+    align-items: center;
+    display: inline-flex;
+    float: right;
+    gap: 6px;
+}
+
+.dbgrid-icon-button {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #b8c2cc;
+    border-radius: 3px;
+    color: #243447;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 12px;
+    height: 22px;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    width: 22px;
+}
+
+.dbgrid-icon-button.dbgrid-active {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
 .dbgrid-no-lines table.dbgrid-table,
 .dbgrid-no-lines table.dbgrid-table th,
 .dbgrid-no-lines table.dbgrid-table td {
@@ -55,6 +84,57 @@ table.dbgrid-table th {
     width: 100%;
 }
 
+.dbgrid-group-panel {
+    align-items: center;
+    background: #eef2f6;
+    border: 1px solid #ccd3dc;
+    border-bottom: 0;
+    box-sizing: border-box;
+    color: #52606d;
+    display: flex;
+    gap: 8px;
+    min-height: 38px;
+    padding: 7px 10px;
+}
+
+.dbgrid-group-chip {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #b8c2cc;
+    border-radius: 3px;
+    color: #243447;
+    display: inline-flex;
+    font-weight: 600;
+    gap: 6px;
+    padding: 4px 6px 4px 8px;
+}
+
+.dbgrid-group-chip button {
+    background: transparent;
+    border: 0;
+    color: #52606d;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+}
+
+.dbgrid-group-placeholder {
+    color: #697586;
+}
+
+.dbgrid-group-row td {
+    background: #e7edf4;
+    color: #243447;
+    font-weight: 600;
+}
+
+.dbgrid-group-summary {
+    color: #697586;
+    font-weight: 400;
+    margin-left: 8px;
+}
+
 .dbgrid-empty td {
     color: #697586;
     text-align: center;
@@ -62,10 +142,15 @@ table.dbgrid-table th {
 
 .dbgrid-navigator {
     align-items: center;
+    background: #f8fafc;
+    border: 1px solid #ccd3dc;
+    border-top: 0;
+    box-sizing: border-box;
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
-    justify-content: flex-end;
-    padding: 10px 0;
+    justify-content: space-between;
+    padding: 8px 10px;
 }
 
 .dbgrid-navigator button {
@@ -73,10 +158,31 @@ table.dbgrid-table th {
     border: 1px solid #b8c2cc;
     border-radius: 3px;
     cursor: pointer;
-    padding: 5px 10px;
+    min-height: 28px;
+    min-width: 30px;
+    padding: 4px 9px;
 }
 
 .dbgrid-navigator button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+}
+
+.dbgrid-nav-buttons {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.dbgrid-nav-separator {
+    background: #ccd3dc;
+    display: inline-block;
+    height: 22px;
+    margin: 0 4px;
+    width: 1px;
+}
+
+.dbgrid-record-info {
+    color: #52606d;
 }
