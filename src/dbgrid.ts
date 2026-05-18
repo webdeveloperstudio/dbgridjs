@@ -211,7 +211,7 @@ export class DBGrid extends Table {
             this.updateEditorValue($(event.currentTarget));
         });
 
-        this.baseElement.on('submit.dbgridjs', '[data-dbgrid-editor-form]', (event: JQuery.SubmitEvent) => {
+        this.baseElement.on('submit.dbgridjs', '[data-dbgrid-editor-form]', (event: JQuery.TriggeredEvent) => {
             event.preventDefault();
             this.saveEditor();
         });
@@ -381,6 +381,65 @@ export class DBGrid extends Table {
         }).join('');
 
         return `<div class="dbgrid-group-panel">${chips || '<span class="dbgrid-group-placeholder">Use the plus button in a column header to group records</span>'}</div>`;
+    }
+
+    private getEditorTemplate(options: DBGridOptions): string {
+        if (!this.editorState) {
+            return '';
+        }
+
+        const title = this.editorState.mode === 'insert' ? 'Create Record' : 'Edit Record';
+        const fields = this.getVisibleColumns(options)
+            .map(column => this.getEditorFieldTemplate(column, this.editorState as DBGridEditorState))
+            .join('');
+
+        return `<div class="dbgrid-editor-backdrop" role="presentation">
+            <section class="dbgrid-editor" role="dialog" aria-modal="true" aria-labelledby="dbgrid-editor-title">
+                <form data-dbgrid-editor-form>
+                    <div class="dbgrid-editor-header">
+                        <h2 id="dbgrid-editor-title">${title}</h2>
+                        <button type="button" class="dbgrid-editor-close" data-dbgrid-editor-cancel aria-label="Close">×</button>
+                    </div>
+                    <div class="dbgrid-editor-body">${fields}</div>
+                    <div class="dbgrid-editor-footer">
+                        <button type="button" data-dbgrid-editor-cancel>Cancel</button>
+                        <button type="submit" class="dbgrid-primary-button">Save</button>
+                    </div>
+                </form>
+            </section>
+        </div>`;
+    }
+
+    private getEditorFieldTemplate(column: DBGridColumn, state: DBGridEditorState): string {
+        const value = state.row[column.fieldName];
+        const caption = column.caption ?? column.fieldName;
+        const error = state.errors[column.fieldName];
+        const disabled = column.readOnly ? 'disabled' : '';
+        const required = column.required ? 'required' : '';
+        const input = this.getEditorInputTemplate(column, value, disabled, required);
+
+        return `<label class="dbgrid-editor-field ${error ? 'dbgrid-editor-field-error' : ''}">
+            <span>${this.escape(caption)}${column.required ? ' *' : ''}</span>
+            ${input}
+            ${error ? `<small>${this.escape(error)}</small>` : ''}
+        </label>`;
+    }
+
+    private getEditorInputTemplate(column: DBGridColumn, value: DBGridCellValue, disabled: string, required: string): string {
+        const fieldName = this.escape(column.fieldName);
+        const common = `data-dbgrid-editor-field="${fieldName}" name="${fieldName}" ${disabled} ${required}`;
+        if (column.dataType === 'boolean') {
+            const isTrue = value === true;
+            const isFalse = value === false;
+            return `<select ${common}>
+                <option value="true" ${isTrue ? 'selected' : ''}>${this.escape(column.trueText ?? 'Yes')}</option>
+                <option value="false" ${isFalse ? 'selected' : ''}>${this.escape(column.falseText ?? 'No')}</option>
+            </select>`;
+        }
+
+        const type = column.dataType === 'number' ? 'number' : column.dataType === 'date' ? 'date' : 'text';
+        const inputValue = column.dataType === 'date' ? this.formatDateInputValue(value) : String(value ?? '');
+        return `<input type="${type}" value="${this.escape(inputValue)}" ${common} />`;
     }
 
     private normalizeOptions(options: DBGridOptions): DBGridOptions {
@@ -684,17 +743,11 @@ export class DBGrid extends Table {
             return;
         }
 
-        const row = this.promptForRow();
-        if (!row) {
-            return;
-        }
-
-        this.options.data.push(row);
-        const rowIndex = this.options.data.length - 1;
-        const key = this.getRowKey(row, rowIndex, this.options);
-        this.focusedRowKey = key;
-        this.selectedKeys = new Set<string>([key]);
-        this.options.events?.onRowInserted?.({ ...this.createContext(this.options), row, rowIndex, key });
+        this.editorState = {
+            mode: 'insert',
+            row: this.getNewRowTemplate(this.options),
+            errors: {}
+        };
         this.renderGrid();
     }
 
@@ -708,17 +761,12 @@ export class DBGrid extends Table {
             return;
         }
 
-        const rowIndex = this.getDataRowIndex(row, this.options, 0);
-        const updatedRow = this.promptForRow(row);
-        if (!updatedRow) {
-            return;
-        }
-
-        this.options.data[rowIndex] = updatedRow;
-        const key = this.getRowKey(updatedRow, rowIndex, this.options);
-        this.focusedRowKey = key;
-        this.selectedKeys = new Set<string>([key]);
-        this.options.events?.onRowUpdated?.({ ...this.createContext(this.options), row: updatedRow, rowIndex, key });
+        this.editorState = {
+            mode: 'edit',
+            row: { ...row },
+            rowIndex: this.getDataRowIndex(row, this.options, 0),
+            errors: {}
+        };
         this.renderGrid();
     }
 
@@ -747,27 +795,109 @@ export class DBGrid extends Table {
         this.renderGrid();
     }
 
-    private promptForRow(source?: DBGridRow): DBGridRow | undefined {
-        if (!this.options) {
-            return undefined;
-        }
-
-        const row: DBGridRow = { ...(source ?? {}) };
-        for (const column of this.getVisibleColumns(this.options)) {
-            if (column.readOnly) {
-                continue;
-            }
-
-            const currentValue = row[column.fieldName];
-            const input = window.prompt(column.caption ?? column.fieldName, String(currentValue ?? ''));
-            if (input === null) {
-                return undefined;
-            }
-
-            row[column.fieldName] = this.parseInputValue(input, column, currentValue);
-        }
+    private getNewRowTemplate(options: DBGridOptions): DBGridRow {
+        const row: DBGridRow = {};
+        this.getVisibleColumns(options).forEach(column => {
+            row[column.fieldName] = this.getDefaultValue(column);
+        });
 
         return row;
+    }
+
+    private getDefaultValue(column: DBGridColumn): DBGridCellValue {
+        if (column.dataType === 'number') {
+            return 0;
+        }
+        if (column.dataType === 'boolean') {
+            return false;
+        }
+        if (column.dataType === 'date') {
+            return new Date();
+        }
+        return '';
+    }
+
+    private updateEditorValue(input: JQuery<HTMLElement>): void {
+        if (!this.editorState || !this.options) {
+            return;
+        }
+
+        const fieldName = String(input.attr('name') ?? '');
+        const column = this.getVisibleColumns(this.options).find(item => item.fieldName === fieldName);
+        if (!column || column.readOnly) {
+            return;
+        }
+
+        this.editorState.row[fieldName] = this.parseInputValue(String(input.val() ?? ''), column, this.editorState.row[fieldName]);
+        delete this.editorState.errors[fieldName];
+    }
+
+    private saveEditor(): void {
+        if (!this.options || !this.editorState) {
+            return;
+        }
+
+        const errors = this.validateEditorRow(this.editorState.row, this.options);
+        if (Object.keys(errors).length > 0) {
+            this.editorState.errors = errors;
+            this.renderGrid();
+            return;
+        }
+
+        const row = { ...this.editorState.row };
+        if (this.editorState.mode === 'insert') {
+            this.options.data.push(row);
+            const rowIndex = this.options.data.length - 1;
+            const key = this.getRowKey(row, rowIndex, this.options);
+            this.focusedRowKey = key;
+            this.selectedKeys = new Set<string>([key]);
+            this.options.events?.onRowInserted?.({ ...this.createContext(this.options), row, rowIndex, key });
+        } else {
+            const rowIndex = this.editorState.rowIndex ?? 0;
+            this.options.data[rowIndex] = row;
+            const key = this.getRowKey(row, rowIndex, this.options);
+            this.focusedRowKey = key;
+            this.selectedKeys = new Set<string>([key]);
+            this.options.events?.onRowUpdated?.({ ...this.createContext(this.options), row, rowIndex, key });
+        }
+
+        this.editorState = undefined;
+        this.renderGrid();
+    }
+
+    private closeEditor(): void {
+        this.editorState = undefined;
+        this.renderGrid();
+    }
+
+    private validateEditorRow(row: DBGridRow, options: DBGridOptions): Record<string, string> {
+        const errors: Record<string, string> = {};
+        this.getVisibleColumns(options).forEach(column => {
+            if (column.readOnly) {
+                return;
+            }
+
+            const value = row[column.fieldName];
+            if (column.required && (value === null || value === undefined || String(value).trim() === '')) {
+                errors[column.fieldName] = `${column.caption ?? column.fieldName} is required.`;
+                return;
+            }
+
+            if (column.dataType === 'number' && value !== null && value !== undefined && Number.isNaN(Number(value))) {
+                errors[column.fieldName] = `${column.caption ?? column.fieldName} must be a number.`;
+            }
+        });
+
+        return errors;
+    }
+
+    private formatDateInputValue(value: DBGridCellValue): string {
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            return value.toISOString().slice(0, 10);
+        }
+
+        const dateValue = new Date(String(value ?? ''));
+        return Number.isNaN(dateValue.getTime()) ? '' : dateValue.toISOString().slice(0, 10);
     }
 
     private parseInputValue(value: string, column: DBGridColumn, currentValue: DBGridCellValue): DBGridCellValue {

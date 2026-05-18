@@ -41,10 +41,10 @@ const gridOptions: DBGridOptions = {
     className: 'grid',
     style: 'width: 100%;',
     columns: [
-        { fieldName: 'id', caption: 'ID', width: 70, dataType: 'number', alignment: 'right' },
-        { fieldName: 'customer', caption: 'Customer', width: 220 },
-        { fieldName: 'status', caption: 'Status', width: 140, groupable: true },
-        { fieldName: 'amount', caption: 'Amount', width: 120, dataType: 'number', alignment: 'right', summary: 'sum', renderer: value => `$${Number(value ?? 0).toFixed(2)}` },
+        { fieldName: 'id', caption: 'ID', width: 70, dataType: 'number', alignment: 'right', required: true },
+        { fieldName: 'customer', caption: 'Customer', width: 220, required: true },
+        { fieldName: 'status', caption: 'Status', width: 140, groupable: true, required: true },
+        { fieldName: 'amount', caption: 'Amount', width: 120, dataType: 'number', alignment: 'right', required: true, summary: 'sum', renderer: value => `$${Number(value ?? 0).toFixed(2)}` },
         { fieldName: 'paid', caption: 'Paid', width: 90, dataType: 'boolean', alignment: 'center' }
     ],
     data: [
